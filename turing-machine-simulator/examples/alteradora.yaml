@@ -1,0 +1,23 @@
+mt:
+  name: alteradora-demo
+  description: >-
+    Borrador de transductor de una cinta que sustituye cada a por b y termina
+    al encontrar el blanco. Es un ejemplo de formato, todavía no ejecutable.
+  states: [q0, q_done]
+  input_alphabet: [a]
+  tape_alphabet: [a, b, '□']
+  blank: '□'
+  initial: q0
+  accept: [q_done]
+  transitions:
+    - from: q0
+      read: [a]
+      write: [b]
+      move: R
+      to: q0
+    - from: q0
+      read: ['□']
+      write: ['□']
+      move: R
+      to: q_done
+  inputs: [a, aa, aaa]

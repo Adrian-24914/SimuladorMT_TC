@@ -1,0 +1,33 @@
+mt:
+  name: reconocedora-demo
+  description: >-
+    Borrador de máquina de una cinta que acepta exactamente una letra a.
+    Configuración ilustrativa; aún no ha sido procesada ni verificada por el parser.
+  states: [q0, q1, q_accept, q_reject]
+  input_alphabet: [a]
+  tape_alphabet: [a, '□']
+  blank: '□'
+  initial: q0
+  accept: [q_accept]
+  transitions:
+    - from: q0
+      read: [a]
+      write: [a]
+      move: R
+      to: q1
+    - from: q0
+      read: ['□']
+      write: ['□']
+      move: R
+      to: q_reject
+    - from: q1
+      read: ['□']
+      write: ['□']
+      move: R
+      to: q_accept
+    - from: q1
+      read: [a]
+      write: [a]
+      move: R
+      to: q_reject
+  inputs: ['', a, aa]

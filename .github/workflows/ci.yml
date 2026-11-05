@@ -11,14 +11,14 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: turing-machine-simulator
+        working-directory: ./
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: turing-machine-simulator/package-lock.json
+          cache-dependency-path: ./package-lock.json
       - run: npm install
       - run: npm run typecheck
       - run: npm run lint

@@ -14,6 +14,28 @@ const minimalConfig: MachineConfig = {
   transitions: [],
 };
 
+const transitionConfig: MachineConfig = {
+  ...minimalConfig,
+  states: ['q0', 'q1', 'qa'],
+  tapeAlphabet: ['a', 'b', 'X', '□'],
+  transitions: [
+    {
+      currentState: 'q0',
+      readSymbol: 'a',
+      writeSymbol: 'X',
+      direction: 'R',
+      nextState: 'q1',
+    },
+    {
+      currentState: 'q1',
+      readSymbol: 'a',
+      writeSymbol: 'a',
+      direction: 'L',
+      nextState: 'qa',
+    },
+  ],
+};
+
 describe('tape', () => {
   it('reads the input from the first cell and moves over it', () => {
     const tape = createTape('ab', '□');
@@ -68,11 +90,27 @@ describe('tape', () => {
   });
 });
 
-describe('remaining core placeholders', () => {
-  it('keeps transition lookup explicitly pending', () => {
-    expect(() => findTransition(minimalConfig, 'q0', 'a')).toThrow('Not implemented');
+describe('transition engine', () => {
+  it('finds a transition matching both state and read symbol', () => {
+    expect(findTransition(transitionConfig, 'q0', 'a')).toEqual({
+      currentState: 'q0',
+      readSymbol: 'a',
+      writeSymbol: 'X',
+      direction: 'R',
+      nextState: 'q1',
+    });
   });
 
+  it('does not match a transition from a different state', () => {
+    expect(findTransition(transitionConfig, 'qa', 'a')).toBeUndefined();
+  });
+
+  it('does not match a transition for a different symbol', () => {
+    expect(findTransition(transitionConfig, 'q0', 'b')).toBeUndefined();
+  });
+});
+
+describe('remaining core placeholders', () => {
   it('does not claim to simulate before the engine is implemented', () => {
     expect(() => simulate(minimalConfig, 'a')).toThrow('Not implemented');
   });

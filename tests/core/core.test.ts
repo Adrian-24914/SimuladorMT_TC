@@ -110,8 +110,116 @@ describe('transition engine', () => {
   });
 });
 
-describe('remaining core placeholders', () => {
-  it('does not claim to simulate before the engine is implemented', () => {
-    expect(() => simulate(minimalConfig, 'a')).toThrow('Not implemented');
+describe('Turing machine simulation', () => {
+  it('accepts immediately when the initial state is accepting', () => {
+    const result = simulate({ ...minimalConfig, initialState: 'qa' }, 'a');
+
+    expect(result).toEqual({
+      status: 'accepted',
+      history: [{ state: 'qa', tape: ['a'], headPosition: 0, step: 0 }],
+      finalState: 'qa',
+      finalTape: ['a'],
+      finalHeadPosition: 0,
+      steps: 0,
+    });
+  });
+
+  it('applies transitions and records the complete history through acceptance', () => {
+    const result = simulate(transitionConfig, 'aa');
+
+    expect(result.status).toBe('accepted');
+    expect(result.steps).toBe(2);
+    expect(result.finalState).toBe('qa');
+    expect(result.finalTape).toEqual(['X', 'a']);
+    expect(result.finalHeadPosition).toBe(0);
+    expect(result.history).toEqual([
+      { state: 'q0', tape: ['a', 'a'], headPosition: 0, step: 0 },
+      { state: 'q1', tape: ['X', 'a'], headPosition: 1, step: 1 },
+      { state: 'qa', tape: ['X', 'a'], headPosition: 0, step: 2 },
+    ]);
+  });
+
+  it('rejects when no transition applies outside an accepting state', () => {
+    const result = simulate(minimalConfig, 'a');
+
+    expect(result.status).toBe('rejected');
+    expect(result.steps).toBe(0);
+    expect(result.finalState).toBe('q0');
+    expect(result.history).toHaveLength(1);
+  });
+
+  it('simulates an empty input starting on a blank cell', () => {
+    const config: MachineConfig = {
+      ...minimalConfig,
+      transitions: [
+        {
+          currentState: 'q0',
+          readSymbol: '□',
+          writeSymbol: 'X',
+          direction: 'R',
+          nextState: 'qa',
+        },
+      ],
+      tapeAlphabet: ['X', '□'],
+    };
+
+    const result = simulate(config, '');
+
+    expect(result.status).toBe('accepted');
+    expect(result.finalTape).toEqual(['X', '□']);
+    expect(result.finalHeadPosition).toBe(1);
+    expect(result.history).toHaveLength(2);
+  });
+
+  it('reports the step limit while another transition remains applicable', () => {
+    const loopingConfig: MachineConfig = {
+      ...minimalConfig,
+      transitions: [
+        {
+          currentState: 'q0',
+          readSymbol: 'a',
+          writeSymbol: 'a',
+          direction: 'R',
+          nextState: 'q0',
+        },
+        {
+          currentState: 'q0',
+          readSymbol: '□',
+          writeSymbol: '□',
+          direction: 'L',
+          nextState: 'q0',
+        },
+      ],
+    };
+
+    const result = simulate(loopingConfig, 'a', { maxSteps: 3 });
+
+    expect(result.status).toBe('step_limit');
+    expect(result.steps).toBe(3);
+    expect(result.history).toHaveLength(4);
+    expect(result.history.at(-1)).toEqual({
+      state: 'q0',
+      tape: ['a', '□'],
+      headPosition: 1,
+      step: 3,
+    });
+  });
+
+  it('accepts when the accepting state is reached exactly at the limit', () => {
+    const result = simulate(transitionConfig, 'aa', { maxSteps: 2 });
+
+    expect(result.status).toBe('accepted');
+    expect(result.steps).toBe(2);
+  });
+
+  it('rejects at the limit when the machine has naturally halted', () => {
+    const result = simulate(minimalConfig, 'a', { maxSteps: 0 });
+
+    expect(result.status).toBe('rejected');
+  });
+
+  it('rejects invalid step limits', () => {
+    expect(() => simulate(minimalConfig, 'a', { maxSteps: -1 })).toThrow(RangeError);
+    expect(() => simulate(minimalConfig, 'a', { maxSteps: 1.5 })).toThrow(RangeError);
   });
 });

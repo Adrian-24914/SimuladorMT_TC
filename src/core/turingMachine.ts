@@ -8,7 +8,8 @@ import type {
 import { createTape, type Tape } from './tape.js';
 import { findTransition } from './transitionEngine.js';
 
-const DEFAULT_MAX_STEPS = 10_000;
+/** Safety limit used when the caller does not provide `SimulationOptions.maxSteps`. */
+export const DEFAULT_MAX_STEPS = 10_000;
 
 function takeSnapshot(state: string, tape: Tape, step: number): InstantaneousDescription {
   return {
@@ -43,7 +44,7 @@ function createResult(
  * applied transition. Acceptance takes precedence when an accepting state is
  * reached. A machine rejects when no transition applies outside an accepting
  * state, and reports `step_limit` when another transition exists but executing
- * it would exceed `maxSteps`.
+ * it would exceed `maxSteps`. The default limit is `DEFAULT_MAX_STEPS`.
  */
 export function simulate(
   config: MachineConfig,

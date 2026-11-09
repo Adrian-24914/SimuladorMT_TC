@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { MachineConfig } from '../../src/shared/types.js';
-import { createTape } from '../../src/core/tape.js';
-import { findTransition } from '../../src/core/transitionEngine.js';
-import { simulate } from '../../src/core/turingMachine.js';
+import { createTape, DEFAULT_MAX_STEPS, findTransition, simulate } from '../../src/core/index.js';
 
 const minimalConfig: MachineConfig = {
   states: ['q0', 'qa'],
@@ -111,6 +109,10 @@ describe('transition engine', () => {
 });
 
 describe('Turing machine simulation', () => {
+  it('publishes the default safety limit through the core API', () => {
+    expect(DEFAULT_MAX_STEPS).toBe(10_000);
+  });
+
   it('accepts immediately when the initial state is accepting', () => {
     const result = simulate({ ...minimalConfig, initialState: 'qa' }, 'a');
 
@@ -210,6 +212,14 @@ describe('Turing machine simulation', () => {
 
     expect(result.status).toBe('accepted');
     expect(result.steps).toBe(2);
+  });
+
+  it('reports the step limit before executing when the configured limit is zero', () => {
+    const result = simulate(transitionConfig, 'aa', { maxSteps: 0 });
+
+    expect(result.status).toBe('step_limit');
+    expect(result.steps).toBe(0);
+    expect(result.history).toEqual([{ state: 'q0', tape: ['a', 'a'], headPosition: 0, step: 0 }]);
   });
 
   it('rejects at the limit when the machine has naturally halted', () => {

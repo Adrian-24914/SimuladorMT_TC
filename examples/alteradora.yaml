@@ -1,23 +1,48 @@
 mt:
-  name: alteradora-demo
+  name: alteradora-incremento-binario
   description: >-
-    Borrador de transductor de una cinta que sustituye cada a por b y termina
-    al encontrar el blanco. Es un ejemplo de formato, todavía no ejecutable.
-  states: [q0, q_done]
-  input_alphabet: [a]
-  tape_alphabet: [a, b, '□']
+    Máquina de Turing de una cinta que suma 1 a un número binario (bit más
+    significativo a la izquierda). Recorre la cinta hasta el blanco final,
+    regresa cambiando los 1 por 0 (acarreo) y detiene el proceso al cambiar el
+    primer 0 (o el blanco inicial) por 1. La cinta final contiene el resultado.
+  states: [q0, q1, q_done]
+  input_alphabet: ['0', '1']
+  tape_alphabet: ['0', '1', '□']
   blank: '□'
   initial: q0
   accept: [q_done]
   transitions:
+    # q0: va al final del número.
     - from: q0
-      read: [a]
-      write: [b]
+      read: ['0']
+      write: ['0']
+      move: R
+      to: q0
+    - from: q0
+      read: ['1']
+      write: ['1']
       move: R
       to: q0
     - from: q0
       read: ['□']
       write: ['□']
+      move: L
+      to: q1
+    # q1: propaga el acarreo hacia la izquierda.
+    - from: q1
+      read: ['1']
+      write: ['0']
+      move: L
+      to: q1
+    - from: q1
+      read: ['0']
+      write: ['1']
       move: R
       to: q_done
-  inputs: [a, aa, aaa]
+    - from: q1
+      read: ['□']
+      write: ['1']
+      move: R
+      to: q_done
+  # Resultados esperados: 10111 -> 11000, 11111 -> 100000, 10100 -> 10101, 101011 -> 101100
+  inputs: ['10111', '11111', '10100', '101011']

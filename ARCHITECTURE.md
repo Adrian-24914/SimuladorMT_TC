@@ -1,36 +1,158 @@
-# Arquitectura
+# Arquitectura del simulador
 
-## Límites de módulos
+## Objetivo del diseño
 
-- `shared`: interfaces TypeScript neutrales al formato YAML y a la consola. Es el único contrato importado por los tres módulos.
-- `parser`: recibe texto YAML, convierte la configuración al contrato normalizado y comunica errores de formato/validación.
-- `core`: consume `MachineConfig` y devuelve `SimulationResult`. No lee archivos ni imprime.
-- `cli`: conecta entrada/salida de usuario con los contratos; no contiene reglas de transición.
+El programa separa la definición de una máquina, su validación, la simulación y la presentación
+de resultados. El motor no lee archivos ni conoce el formato YAML, por lo que una máquina nueva
+puede agregarse sin modificar la lógica de simulación.
 
-El flujo previsto es `archivo YAML → parser → MachineConfig → core.simulate → SimulationResult → formatter/output`. En este scaffold ese flujo está documentado, pero deliberadamente no está conectado ni implementado.
+## Flujo de ejecución
 
-## Contratos compartidos
+```text
+archivo YAML
+    -> CLI: lectura del archivo
+    -> parser: conversión y normalización
+    -> validator: validación semántica
+    -> MachineConfig
+    -> core.simulate
+    -> SimulationResult
+    -> formatter/output
+    -> terminal
+```
 
-`src/shared/types.ts` define `Transition`, `MachineConfig`, `InstantaneousDescription`, `SimulationResult`, `Direction`, `SimulationStatus`, `SimulationOptions` y tipos de validación. La transición interna modela una sola cinta con un símbolo leído/escrito y dirección `L` o `R`. En YAML, los campos `read` y `write` pueden presentarse como arreglos de longitud uno; el parser deberá normalizarlos a strings y rechazar arreglos incompatibles.
+La CLI integra los módulos únicamente mediante sus APIs públicas:
 
-`SimulationStatus` distingue `accepted`, `rejected` y `step_limit`. Una descripción instantánea guarda estado, cinta, posición del cabezal y número de paso. La cinta se expresa como arreglo de símbolos; la política de celdas en blanco y de límites se debe fijar en el core de acuerdo con el PDF.
+- `src/parser/index.ts`: `parseMachine` y `validateMachineConfig`.
+- `src/core/index.ts`: `createTape`, `findTransition`, `simulate` y
+  `DEFAULT_MAX_STEPS`.
 
-Decisiones provisionales por falta del PDF en el repositorio: Node.js 22, ESM, YAML con la biblioteca `yaml`, direcciones `L`/`R` sin movimiento estacionario, y nombres de claves YAML ilustrados en `examples/`. Confirmar o ajustar estas decisiones al consultar el documento fuente.
+## Módulo `shared`
 
-## Dependencias permitidas
+`src/shared/types.ts` contiene los contratos neutrales compartidos:
 
-`parser → shared`, `core → shared`, `cli → shared`. La CLI podrá orquestar parser/core cuando estén listos, pero ningún módulo importará implementaciones internas de otro módulo. Las pruebas de CLI pueden inyectar resultados; las pruebas del core crean configuraciones a mano; las pruebas del parser comparan contra objetos esperados.
+- `Transition`: estado actual, símbolo leído, símbolo escrito, dirección y siguiente estado.
+- `MachineConfig`: definición normalizada de una máquina determinista de una cinta.
+- `InstantaneousDescription`: estado, copia de la cinta, posición del cabezal y paso.
+- `SimulationResult`: estado de terminación, historial y configuración final.
+- `SimulationOptions`: opciones de ejecución, incluido `maxSteps`.
+- `ValidationResult`: resultado y detalles de la validación.
 
-## Mocks y trabajo independiente
+`SimulationStatus` distingue tres terminaciones:
 
-- Parser: probar la conversión usando texto YAML y comparar el resultado con un `MachineConfig` esperado; simular dependencias externas solo si se agregan.
-- Core: construir `MachineConfig` directamente, sin cargar archivos YAML.
-- CLI: crear `SimulationResult` de prueba o mockear `formatResult`/salida; no requiere una simulación real.
+- `accepted`: se alcanzó un estado de aceptación.
+- `rejected`: no existe una transición aplicable fuera de un estado de aceptación.
+- `step_limit`: existe una transición aplicable, pero ejecutarla excedería el límite.
 
-## Cambios a contratos compartidos
+## Módulo `parser`
 
-Los cambios en `shared/types.ts` deben conservar la compatibilidad o actualizar las pruebas y consumidores afectados. Preferir campos opcionales solo cuando exista una necesidad documentada. Cada módulo debe exportar su API pública desde su `index.ts` y evitar exponer detalles internos.
+El parser recibe texto YAML y devuelve un `MachineConfig`. Su responsabilidad es adaptar los
+nombres externos, como `input_alphabet`, `from` y `to`, a los nombres internos de TypeScript.
 
-## Estado actual
+Las propiedades `read` y `write` del YAML son arreglos de exactamente un elemento porque el
+simulador implementa una sola cinta. El parser normaliza esos elementos a `readSymbol` y
+`writeSymbol`.
 
-Las funciones de parser, validador, cinta, motor, simulación y formateo lanzan errores `Not implemented`. Esto es intencional: no debe interpretarse como una implementación de referencia ni como un resultado de aceptación/rechazo.
+El validador comprueba, entre otros aspectos:
+
+- existencia y formato de los campos requeridos;
+- pertenencia de estados y símbolos a sus alfabetos;
+- validez de los estados iniciales y de aceptación;
+- direcciones permitidas (`L` o `R`);
+- transiciones deterministas sin duplicados por estado y símbolo;
+- compatibilidad de las entradas configuradas con el alfabeto de entrada.
+
+Los errores se comunican antes de iniciar la simulación.
+
+## Módulo `core`
+
+### Cinta
+
+`src/core/tape.ts` representa la cinta mediante un arreglo y un índice de cabezal. La entrada
+ocupa inicialmente las celdas de izquierda a derecha; una entrada vacía comienza con una celda
+en blanco.
+
+- Al mover a la derecha después de la última celda, se agrega un blanco al final.
+- Al mover a la izquierda desde la posición cero, se agrega un blanco al principio.
+- `toArray()` devuelve una copia para que los historiales no cambien después de registrarse.
+
+De esta forma, `headPosition` siempre es un índice válido dentro del arreglo expuesto.
+
+### Motor de transiciones
+
+`src/core/transitionEngine.ts` busca una transición cuya combinación de `currentState` y
+`readSymbol` coincida exactamente con la configuración actual. Devuelve `undefined` cuando no
+existe una transición aplicable.
+
+### Simulación
+
+`src/core/turingMachine.ts` ejecuta el siguiente ciclo:
+
+1. Crea la cinta y registra la configuración inicial como paso cero.
+2. Comprueba si el estado actual es de aceptación.
+3. Busca una transición para el estado y símbolo actuales.
+4. Si no existe, devuelve `rejected`.
+5. Si el siguiente paso excedería `maxSteps`, devuelve `step_limit`.
+6. Escribe el símbolo, mueve el cabezal y actualiza el estado.
+7. Incrementa el paso y guarda una nueva descripción instantánea.
+8. Repite desde la comprobación de aceptación.
+
+La aceptación y la detención natural se comprueban antes del límite. Por ello, una máquina que
+acepta o se bloquea exactamente al alcanzar el máximo conserva su resultado real. El límite
+predeterminado es `DEFAULT_MAX_STEPS = 10_000`.
+
+El `SimulationResult` conserva:
+
+- estado de terminación;
+- historial completo;
+- estado final;
+- cinta final;
+- posición final del cabezal;
+- cantidad de transiciones ejecutadas.
+
+## Módulo `cli`
+
+`src/cli/main.ts` es el punto de integración. Sus responsabilidades son:
+
+- interpretar los argumentos;
+- permitir seleccionar un YAML de `examples/`;
+- leer el archivo;
+- llamar al parser y al motor mediante `realEngine`;
+- validar las entradas proporcionadas por terminal;
+- ejecutar una o varias cadenas;
+- seleccionar salida detallada o resumida;
+- establecer códigos de salida para éxito, error y uso incorrecto.
+
+`src/cli/formatter.ts` transforma el historial y el resultado en texto. La celda bajo el cabezal
+se muestra entre corchetes. `src/cli/output.ts` envía el texto a la consola o a un destino
+inyectado.
+
+## Dependencias entre módulos
+
+```text
+parser -> shared
+core   -> shared
+cli    -> parser + core + shared
+```
+
+El parser no depende del motor. El motor no depende del YAML, del sistema de archivos ni de la
+consola. Esta separación permite probar cada componente de manera independiente.
+
+## Estrategia de pruebas
+
+- `tests/parser/`: conversión de YAML y validación.
+- `tests/core/`: cinta, transiciones, historial, aceptación, rechazo y límite de pasos.
+- `tests/cli/formatter.test.ts`: presentación del historial y resultados.
+- `tests/cli/output.test.ts`: envío de salida a destinos inyectados.
+- `tests/cli/main.test.ts`: argumentos y flujo de la CLI con dependencias simuladas.
+- `tests/cli/examples.test.ts`: integración real de parser, motor y YAML de `examples/`.
+
+Las pruebas de integración verifican la reconocedora de `a^n b^n c^n` y la alteradora que
+duplica cadenas binarias mediante la transformación `w -> ww`.
+
+## Extensibilidad
+
+Para agregar otra máquina compatible solo se necesita crear un YAML con estados, alfabetos y
+transiciones válidas. No es necesario modificar el parser, la cinta, el motor ni la CLI.
+
+El formato actual representa máquinas deterministas de una cinta y admite únicamente movimientos
+`L` y `R`.

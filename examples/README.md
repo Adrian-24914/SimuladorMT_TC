@@ -8,29 +8,32 @@ verificados por `tests/cli/examples.test.ts`.
 
 Node.js 22 o superior y las dependencias instaladas:
 
-```bash
-npm install
+```powershell
+npm.cmd install
 ```
+
+En sistemas distintos de Windows puede utilizarse `npm` en lugar de `npm.cmd`.
 
 ## Cómo ejecutarlos
 
 Todas las cadenas definidas en el YAML, con historial paso a paso:
 
-```bash
-npm run dev -- examples/reconocedora.yaml
-npm run dev -- examples/alteradora.yaml
+```powershell
+npm.cmd run dev -- examples/reconocedora.yaml
+npm.cmd run dev -- examples/alteradora.yaml
 ```
 
 Solo el resultado final de cada cadena (sin historial):
 
-```bash
-npm run dev -- examples/reconocedora.yaml --summary
+```powershell
+npm.cmd run dev -- examples/reconocedora.yaml --summary
+npm.cmd run dev -- examples/alteradora.yaml --summary
 ```
 
 Sin indicar archivo, la CLI lista los YAML de `examples/` y pide elegir uno por número:
 
-```bash
-npm run dev
+```powershell
+npm.cmd run dev
 ```
 
 Otras opciones:
@@ -42,12 +45,13 @@ Otras opciones:
 | `--summary`              | Muestra solo el resultado final.                               |
 | `-h`, `--help`           | Muestra la ayuda.                                              |
 
-Ejemplo: `npm run dev -- examples/reconocedora.yaml --input aabbcc --input aabbbcc`
+Ejemplo: `npm.cmd run dev -- examples/reconocedora.yaml --input aabbcc --input aabbbcc`
 
 También se puede compilar y ejecutar el JavaScript generado:
 
-```bash
-npm run build
+```powershell
+npm.cmd run build
+node dist/cli/main.js examples/reconocedora.yaml --summary
 node dist/cli/main.js examples/alteradora.yaml --summary
 ```
 

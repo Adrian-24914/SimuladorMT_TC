@@ -1,33 +1,70 @@
 mt:
-  name: reconocedora-demo
+  name: reconocedora-anbn
   description: >-
-    Borrador de máquina de una cinta que acepta exactamente una letra a.
-    Configuración ilustrativa; aún no ha sido procesada ni verificada por el parser.
-  states: [q0, q1, q_accept, q_reject]
-  input_alphabet: [a]
-  tape_alphabet: [a, '□']
+    Máquina de Turing de una cinta que reconoce el lenguaje L = { a^n b^n | n >= 1 }.
+    Marca una a con X, busca la primera b sin marcar y la marca con Y, regresa
+    a la X y repite. Al terminar verifica que solo queden Y hasta el blanco.
+  states: [q0, q1, q2, q3, q_accept]
+  input_alphabet: [a, b]
+  tape_alphabet: [a, b, X, Y, '□']
   blank: '□'
   initial: q0
   accept: [q_accept]
   transitions:
+    # q0: busca la siguiente a sin marcar (o pasa a verificar si ya no hay).
     - from: q0
+      read: [a]
+      write: [X]
+      move: R
+      to: q1
+    - from: q0
+      read: [Y]
+      write: [Y]
+      move: R
+      to: q3
+    # q1: avanza a la derecha hasta la primera b sin marcar y la marca.
+    - from: q1
       read: [a]
       write: [a]
       move: R
       to: q1
-    - from: q0
-      read: ['□']
-      write: ['□']
-      move: R
-      to: q_reject
     - from: q1
+      read: [Y]
+      write: [Y]
+      move: R
+      to: q1
+    - from: q1
+      read: [b]
+      write: [Y]
+      move: L
+      to: q2
+    # q2: regresa a la izquierda hasta la última X.
+    - from: q2
+      read: [a]
+      write: [a]
+      move: L
+      to: q2
+    - from: q2
+      read: [Y]
+      write: [Y]
+      move: L
+      to: q2
+    - from: q2
+      read: [X]
+      write: [X]
+      move: R
+      to: q0
+    # q3: verifica que solo queden Y hasta el blanco.
+    - from: q3
+      read: [Y]
+      write: [Y]
+      move: R
+      to: q3
+    - from: q3
       read: ['□']
       write: ['□']
       move: R
       to: q_accept
-    - from: q1
-      read: [a]
-      write: [a]
-      move: R
-      to: q_reject
-  inputs: ['', a, aa]
+  # Aceptadas (longitud >= 5): aaabbb, aaaabbbb, aaaaabbbbb
+  # Rechazadas (longitud >= 5): aaabb, aabbb, ababab
+  inputs: [aaabbb, aaaabbbb, aaaaabbbbb, aaabb, aabbb, ababab]

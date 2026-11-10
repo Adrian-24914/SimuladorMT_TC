@@ -1,7 +1,7 @@
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { createInterface } from 'node:readline/promises';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { simulate } from '../core/index.js';
 import { parseMachine } from '../parser/index.js';
 import type { MachineConfig, SimulationOptions, SimulationResult } from '../shared/types.js';
@@ -283,7 +283,12 @@ export async function runCli(
 
 function isDirectRun(): boolean {
   const entry = process.argv[1];
-  return entry !== undefined && import.meta.url === pathToFileURL(path.resolve(entry)).href;
+  if (entry === undefined) return false;
+  // Se comparan rutas del sistema (no URLs) y, en Windows, sin distinguir mayúsculas
+  // (por ejemplo "c:" frente a "C:"), para que funcione igual en todos los sistemas.
+  const normalize = (value: string): string =>
+    process.platform === 'win32' ? value.toLowerCase() : value;
+  return normalize(path.resolve(fileURLToPath(import.meta.url))) === normalize(path.resolve(entry));
 }
 
 if (isDirectRun()) {

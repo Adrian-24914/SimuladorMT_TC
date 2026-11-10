@@ -1,3 +1,4 @@
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { MachineConfig, SimulationResult } from '../../src/shared/types.js';
 import { UsageError, parseArgs, runCli, type CliDeps, type Engine } from '../../src/cli/main.js';
@@ -206,13 +207,15 @@ describe('runCli', () => {
   });
 
   it('sin archivo ofrece la lista y usa el número elegido', async () => {
-    const h = createHarness({ files: { 'ejemplos/dos.yaml': 'x' }, answer: '2' });
+    // path.join usa "/" en Linux/macOS y "\\" en Windows; la prueba debe funcionar en ambos.
+    const dos = path.join('ejemplos', 'dos.yaml');
+    const h = createHarness({ files: { [dos]: 'x' }, answer: '2' });
     const code = await runCli([], h.deps);
     expect(code).toBe(0);
     const text = h.out.join('\n');
     expect(text).toContain('1) uno.yaml');
     expect(text).toContain('2) dos.yaml');
-    expect(text).toContain('Archivo: ejemplos/dos.yaml');
+    expect(text).toContain(`Archivo: ${dos}`);
     expect(h.prompts).toHaveLength(1);
   });
 

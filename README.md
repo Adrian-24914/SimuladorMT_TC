@@ -1,89 +1,59 @@
-# Ejemplos de máquinas de Turing
+# Simulador de Máquinas de Turing
 
-Dos máquinas de una sola cinta, listas para ejecutarse con la CLI. Los resultados que se
-muestran abajo son los obtenidos con el parser y el motor reales integrados en `main`, y están
-verificados por `tests/cli/examples.test.ts`.
+Base académica en TypeScript para desarrollar, en módulos independientes, una CLI que simule máquinas de Turing de una sola cinta.
 
-## Requisitos
+> Estado: scaffold inicial. El parser, el motor, la presentación de resultados y los ejemplos aún no han sido verificados contra `Proyecto_3.pdf`. No se afirma que exista una simulación funcional.
 
-Node.js 22 o superior y las dependencias instaladas:
+## Requisitos previos
+
+- Node.js 22 o superior.
+- npm (incluido con Node.js).
+- Git.
+
+## Instalación
+
+Desde este directorio:
 
 ```bash
 npm install
 ```
 
-## Cómo ejecutarlos
+## Comandos
 
-Todas las cadenas definidas en el YAML, con historial paso a paso:
+| Comando | Propósito |
+| --- | --- |
+| `npm run dev` | Imprime un aviso de desarrollo; no simula. |
+| `npm run build` | Compila `src/` a `dist/`. |
+| `npm run typecheck` | Verifica tipos de fuente y pruebas. |
+| `npm test` | Ejecuta pruebas unitarias iniciales con Vitest. |
+| `npm run lint` | Analiza el código con ESLint. |
+| `npm run format` | Aplica Prettier. |
+| `npm run format:check` | Comprueba formato sin modificar archivos. |
 
-```bash
-npm run dev -- examples/reconocedora.yaml
-npm run dev -- examples/alteradora.yaml
+## Estructura
+
+```text
+src/shared/  Contratos estables compartidos
+src/parser/  Adaptación de YAML y validación
+src/core/    Cinta, transiciones y simulación
+src/cli/     Entrada de consola y presentación
+ tests/      Pruebas separadas por módulo
+examples/    Borradores YAML de máquina reconocedora y alteradora
+.github/     CI de calidad para pull requests y ramas de trabajo
 ```
 
-Solo el resultado final de cada cadena (sin historial):
+## Pruebas
 
-```bash
-npm run dev -- examples/reconocedora.yaml --summary
-```
+Ejecuta `npm test`. Las pruebas actuales verifican que los puntos aún no implementados estén expuestos y fallen explícitamente; no prueban comportamiento de simulación. Para probar módulos de forma independiente, usa `MachineConfig`/`SimulationResult` escritos a mano y mocks, sin importar implementaciones internas de otros módulos.
 
-Sin indicar archivo, la CLI lista los YAML de `examples/` y pide elegir uno por número:
+## Estado y trabajo pendiente
 
-```bash
-npm run dev
-```
+- Parser: lectura YAML, esquema final, validación y errores descriptivos.
+- Core: cinta ilimitada, motor de transición, historial, condiciones de parada y límite de pasos.
+- CLI: argumentos/selección de archivos, visualización paso a paso y salida final.
+- Ejemplos: confirmar formato y semántica con los requisitos exactos de `Proyecto_3.pdf`.
+- Revisar y regenerar `package-lock.json` ejecutando `npm install` al integrar dependencias.
 
-Otras opciones:
+## GitHub
 
-| Opción                   | Efecto                                                         |
-| ------------------------ | -------------------------------------------------------------- |
-| `-i`, `--input <cadena>` | Simula solo esa cadena (repetible). `""` es la cadena vacía.   |
-| `--max-steps <n>`        | Límite de pasos por cadena (por defecto el del motor, 10 000). |
-| `--summary`              | Muestra solo el resultado final.                               |
-| `-h`, `--help`           | Muestra la ayuda.                                              |
-
-Ejemplo: `npm run dev -- examples/reconocedora.yaml --input aaabbb --input aaabb`
-
-También se puede compilar y ejecutar el JavaScript generado:
-
-```bash
-npm run build
-node dist/cli/main.js examples/alteradora.yaml --summary
-```
-
-Códigos de salida: `0` terminó (aunque haya cadenas rechazadas), `1` error de archivo, YAML o
-simulación, `2` uso incorrecto de la línea de comandos.
-
-## Salida
-
-Cada cadena muestra las descripciones instantáneas (paso, estado, posición del cabezal y cinta,
-con la celda bajo el cabezal entre corchetes) y el resultado final (aceptada, rechazada o límite
-de pasos, estado final y cinta final). Al final se imprime un resumen de todas las cadenas.
-
-## `reconocedora.yaml`: L = { aⁿbⁿ | n ≥ 1 }
-
-| Cadena       | Longitud | Resultado |
-| ------------ | -------- | --------- |
-| `aaabbb`     | 6        | Aceptada  |
-| `aaaabbbb`   | 8        | Aceptada  |
-| `aaaaabbbbb` | 10       | Aceptada  |
-| `aaabb`      | 5        | Rechazada |
-| `aabbb`      | 5        | Rechazada |
-| `ababab`     | 6        | Rechazada |
-
-## `alteradora.yaml`: suma 1 a un número binario
-
-La cinta final contiene el resultado (los `□` son blancos).
-
-| Entrada  | Longitud | Cinta final |
-| -------- | -------- | ----------- |
-| `10111`  | 5        | `11000`     |
-| `11111`  | 5        | `100000`    |
-| `10100`  | 5        | `10101`     |
-| `101011` | 6        | `101100`    |
-
-## Formato del YAML
-
-Clave raíz `mt` con `states`, `input_alphabet`, `tape_alphabet`, `blank`, `initial`, `accept`,
-`transitions` (cada una con `from`, `read: [símbolo]`, `write: [símbolo]`, `move: L|R`, `to`) e
-`inputs` (cadenas a simular). Es el formato que acepta el parser actual (`src/parser`).
+La estructura está preparada para `main`, `feature/parser`, `feature/core` y `feature/cli`. Revisa `INSTRUCCIONES_EQUIPO.md` para el flujo de ramas y PR.

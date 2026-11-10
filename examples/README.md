@@ -42,7 +42,7 @@ Otras opciones:
 | `--summary`              | Muestra solo el resultado final.                               |
 | `-h`, `--help`           | Muestra la ayuda.                                              |
 
-Ejemplo: `npm run dev -- examples/reconocedora.yaml --input aaabbb --input aaabb`
+Ejemplo: `npm run dev -- examples/reconocedora.yaml --input aabbcc --input aabbbcc`
 
 También se puede compilar y ejecutar el JavaScript generado:
 
@@ -60,27 +60,31 @@ Cada cadena muestra las descripciones instantáneas (paso, estado, posición del
 con la celda bajo el cabezal entre corchetes) y el resultado final (aceptada, rechazada o límite
 de pasos, estado final y cinta final). Al final se imprime un resumen de todas las cadenas.
 
-## `reconocedora.yaml`: L = { aⁿbⁿ | n ≥ 1 }
+## `reconocedora.yaml`: L = { aⁿbⁿcⁿ | n ≥ 1 }
 
-| Cadena       | Longitud | Resultado |
-| ------------ | -------- | --------- |
-| `aaabbb`     | 6        | Aceptada  |
-| `aaaabbbb`   | 8        | Aceptada  |
-| `aaaaabbbbb` | 10       | Aceptada  |
-| `aaabb`      | 5        | Rechazada |
-| `aabbb`      | 5        | Rechazada |
-| `ababab`     | 6        | Rechazada |
+La máquina relaciona tres bloques: marca una `a` con `X`, una `b` con `Y` y una `c` con `Z`
+en cada ciclo. Después vuelve al extremo izquierdo y repite.
 
-## `alteradora.yaml`: suma 1 a un número binario
+| Cadena         | Longitud | Resultado |
+| -------------- | -------- | --------- |
+| `aabbcc`       | 6        | Aceptada  |
+| `aaabbbccc`    | 9        | Aceptada  |
+| `aaaabbbbcccc` | 12       | Aceptada  |
+| `aabbbcc`      | 7        | Rechazada |
+| `aabbc`        | 5        | Rechazada |
+| `aabccc`       | 6        | Rechazada |
 
-La cinta final contiene el resultado (los `□` son blancos).
+## `alteradora.yaml`: duplicación de una cadena binaria
 
-| Entrada  | Longitud | Cinta final |
-| -------- | -------- | ----------- |
-| `10111`  | 5        | `11000`     |
-| `11111`  | 5        | `100000`    |
-| `10100`  | 5        | `10101`     |
-| `101011` | 6        | `101100`    |
+La transformación es `w -> ww`. La máquina marca los símbolos originales, anexa una copia
+temporal al extremo derecho y finalmente restaura todos los marcadores. Los `□` son blancos.
+
+| Entrada  | Longitud | Cinta final    |
+| -------- | -------- | -------------- |
+| `10101`  | 5        | `1010110101`   |
+| `11010`  | 5        | `1101011010`   |
+| `11111`  | 5        | `1111111111`   |
+| `100101` | 6        | `100101100101` |
 
 ## Formato del YAML
 

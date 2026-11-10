@@ -1,48 +1,203 @@
 mt:
-  name: alteradora-incremento-binario
+  name: alteradora-duplicacion-binaria
   description: >-
-    Máquina de Turing de una cinta que suma 1 a un número binario (bit más
-    significativo a la izquierda). Recorre la cinta hasta el blanco final,
-    regresa cambiando los 1 por 0 (acarreo) y detiene el proceso al cambiar el
-    primer 0 (o el blanco inicial) por 1. La cinta final contiene el resultado.
-  states: [q0, q1, q_done]
+    Máquina de Turing de una cinta que transforma una cadena binaria w en ww.
+    Marca cada símbolo original, recorre la cinta para anexar una copia temporal
+    al extremo derecho, vuelve al inicio y finalmente limpia todos los marcadores.
+  states: [q_find, q_append_0, q_append_1, q_return, q_cleanup_left, q_cleanup, q_accept]
   input_alphabet: ['0', '1']
-  tape_alphabet: ['0', '1', '□']
+  tape_alphabet: ['0', '1', X, Y, A, B, '□']
   blank: '□'
-  initial: q0
-  accept: [q_done]
+  initial: q_find
+  accept: [q_accept]
   transitions:
-    # q0: va al final del número.
-    - from: q0
+    # q_find: X representa un 0 original procesado y Y un 1 procesado.
+    - from: q_find
+      read: [X]
+      write: [X]
+      move: R
+      to: q_find
+    - from: q_find
+      read: [Y]
+      write: [Y]
+      move: R
+      to: q_find
+    - from: q_find
+      read: ['0']
+      write: [X]
+      move: R
+      to: q_append_0
+    - from: q_find
+      read: ['1']
+      write: [Y]
+      move: R
+      to: q_append_1
+    # A y B pertenecen a la copia; encontrarlos indica que terminó el marcado.
+    - from: q_find
+      read: [A]
+      write: [A]
+      move: L
+      to: q_cleanup_left
+    - from: q_find
+      read: [B]
+      write: [B]
+      move: L
+      to: q_cleanup_left
+
+    # q_append_0: avanza hasta el extremo y anexa un 0 temporal como A.
+    - from: q_append_0
       read: ['0']
       write: ['0']
       move: R
-      to: q0
-    - from: q0
+      to: q_append_0
+    - from: q_append_0
       read: ['1']
       write: ['1']
       move: R
-      to: q0
-    - from: q0
+      to: q_append_0
+    - from: q_append_0
+      read: [X]
+      write: [X]
+      move: R
+      to: q_append_0
+    - from: q_append_0
+      read: [Y]
+      write: [Y]
+      move: R
+      to: q_append_0
+    - from: q_append_0
+      read: [A]
+      write: [A]
+      move: R
+      to: q_append_0
+    - from: q_append_0
+      read: [B]
+      write: [B]
+      move: R
+      to: q_append_0
+    - from: q_append_0
+      read: ['□']
+      write: [A]
+      move: L
+      to: q_return
+
+    # q_append_1: avanza hasta el extremo y anexa un 1 temporal como B.
+    - from: q_append_1
+      read: ['0']
+      write: ['0']
+      move: R
+      to: q_append_1
+    - from: q_append_1
+      read: ['1']
+      write: ['1']
+      move: R
+      to: q_append_1
+    - from: q_append_1
+      read: [X]
+      write: [X]
+      move: R
+      to: q_append_1
+    - from: q_append_1
+      read: [Y]
+      write: [Y]
+      move: R
+      to: q_append_1
+    - from: q_append_1
+      read: [A]
+      write: [A]
+      move: R
+      to: q_append_1
+    - from: q_append_1
+      read: [B]
+      write: [B]
+      move: R
+      to: q_append_1
+    - from: q_append_1
+      read: ['□']
+      write: [B]
+      move: L
+      to: q_return
+
+    # q_return: regresa hasta el blanco izquierdo después de anexar un símbolo.
+    - from: q_return
+      read: ['0']
+      write: ['0']
+      move: L
+      to: q_return
+    - from: q_return
+      read: ['1']
+      write: ['1']
+      move: L
+      to: q_return
+    - from: q_return
+      read: [X]
+      write: [X]
+      move: L
+      to: q_return
+    - from: q_return
+      read: [Y]
+      write: [Y]
+      move: L
+      to: q_return
+    - from: q_return
+      read: [A]
+      write: [A]
+      move: L
+      to: q_return
+    - from: q_return
+      read: [B]
+      write: [B]
+      move: L
+      to: q_return
+    - from: q_return
       read: ['□']
       write: ['□']
-      move: L
-      to: q1
-    # q1: propaga el acarreo hacia la izquierda.
-    - from: q1
-      read: ['1']
-      write: ['0']
-      move: L
-      to: q1
-    - from: q1
-      read: ['0']
-      write: ['1']
       move: R
-      to: q_done
-    - from: q1
+      to: q_find
+
+    # q_cleanup_left: busca el blanco izquierdo antes de limpiar marcadores.
+    - from: q_cleanup_left
+      read: [X]
+      write: [X]
+      move: L
+      to: q_cleanup_left
+    - from: q_cleanup_left
+      read: [Y]
+      write: [Y]
+      move: L
+      to: q_cleanup_left
+    - from: q_cleanup_left
       read: ['□']
+      write: ['□']
+      move: R
+      to: q_cleanup
+
+    # q_cleanup: restaura tanto la cadena original como la copia temporal.
+    - from: q_cleanup
+      read: [X]
+      write: ['0']
+      move: R
+      to: q_cleanup
+    - from: q_cleanup
+      read: [Y]
       write: ['1']
       move: R
-      to: q_done
-  # Resultados esperados: 10111 -> 11000, 11111 -> 100000, 10100 -> 10101, 101011 -> 101100
-  inputs: ['10111', '11111', '10100', '101011']
+      to: q_cleanup
+    - from: q_cleanup
+      read: [A]
+      write: ['0']
+      move: R
+      to: q_cleanup
+    - from: q_cleanup
+      read: [B]
+      write: ['1']
+      move: R
+      to: q_cleanup
+    - from: q_cleanup
+      read: ['□']
+      write: ['□']
+      move: R
+      to: q_accept
+
+  # Cuatro entradas de longitud >= 5 y sus salidas son w concatenada con w.
+  inputs: ['10101', '11010', '11111', '100101']

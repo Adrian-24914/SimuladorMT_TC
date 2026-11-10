@@ -1,70 +1,121 @@
 mt:
-  name: reconocedora-anbn
+  name: reconocedora-anbncn
   description: >-
-    Máquina de Turing de una cinta que reconoce el lenguaje L = { a^n b^n | n >= 1 }.
-    Marca una a con X, busca la primera b sin marcar y la marca con Y, regresa
-    a la X y repite. Al terminar verifica que solo queden Y hasta el blanco.
-  states: [q0, q1, q2, q3, q_accept]
-  input_alphabet: [a, b]
-  tape_alphabet: [a, b, X, Y, '□']
+    Máquina de Turing de una cinta que reconoce el lenguaje
+    L = { a^n b^n c^n | n >= 1 }. En cada ciclo marca una a con X,
+    una b con Y y una c con Z; después vuelve al inicio y repite.
+  states: [q0, q_find_b, q_find_c, q_return, q_verify, q_accept]
+  input_alphabet: [a, b, c]
+  tape_alphabet: [a, b, c, X, Y, Z, '□']
   blank: '□'
   initial: q0
   accept: [q_accept]
   transitions:
-    # q0: busca la siguiente a sin marcar (o pasa a verificar si ya no hay).
+    # q0: omite las a ya marcadas y marca la siguiente a pendiente.
     - from: q0
-      read: [a]
-      write: [X]
-      move: R
-      to: q1
-    - from: q0
-      read: [Y]
-      write: [Y]
-      move: R
-      to: q3
-    # q1: avanza a la derecha hasta la primera b sin marcar y la marca.
-    - from: q1
-      read: [a]
-      write: [a]
-      move: R
-      to: q1
-    - from: q1
-      read: [Y]
-      write: [Y]
-      move: R
-      to: q1
-    - from: q1
-      read: [b]
-      write: [Y]
-      move: L
-      to: q2
-    # q2: regresa a la izquierda hasta la última X.
-    - from: q2
-      read: [a]
-      write: [a]
-      move: L
-      to: q2
-    - from: q2
-      read: [Y]
-      write: [Y]
-      move: L
-      to: q2
-    - from: q2
       read: [X]
       write: [X]
       move: R
       to: q0
-    # q3: verifica que solo queden Y hasta el blanco.
-    - from: q3
+    - from: q0
+      read: [a]
+      write: [X]
+      move: R
+      to: q_find_b
+    # Si ya no quedan a, comienza la verificación final.
+    - from: q0
       read: [Y]
       write: [Y]
       move: R
-      to: q3
-    - from: q3
+      to: q_verify
+
+    # q_find_b: busca la primera b sin marcar y la convierte en Y.
+    - from: q_find_b
+      read: [a]
+      write: [a]
+      move: R
+      to: q_find_b
+    - from: q_find_b
+      read: [Y]
+      write: [Y]
+      move: R
+      to: q_find_b
+    - from: q_find_b
+      read: [b]
+      write: [Y]
+      move: R
+      to: q_find_c
+
+    # q_find_c: busca la primera c sin marcar y la convierte en Z.
+    - from: q_find_c
+      read: [b]
+      write: [b]
+      move: R
+      to: q_find_c
+    - from: q_find_c
+      read: [Z]
+      write: [Z]
+      move: R
+      to: q_find_c
+    - from: q_find_c
+      read: [c]
+      write: [Z]
+      move: L
+      to: q_return
+
+    # q_return: vuelve hasta el blanco izquierdo para iniciar otro ciclo.
+    - from: q_return
+      read: [a]
+      write: [a]
+      move: L
+      to: q_return
+    - from: q_return
+      read: [b]
+      write: [b]
+      move: L
+      to: q_return
+    - from: q_return
+      read: [c]
+      write: [c]
+      move: L
+      to: q_return
+    - from: q_return
+      read: [X]
+      write: [X]
+      move: L
+      to: q_return
+    - from: q_return
+      read: [Y]
+      write: [Y]
+      move: L
+      to: q_return
+    - from: q_return
+      read: [Z]
+      write: [Z]
+      move: L
+      to: q_return
+    - from: q_return
+      read: ['□']
+      write: ['□']
+      move: R
+      to: q0
+
+    # q_verify: acepta únicamente si todas las b y c quedaron marcadas.
+    - from: q_verify
+      read: [Y]
+      write: [Y]
+      move: R
+      to: q_verify
+    - from: q_verify
+      read: [Z]
+      write: [Z]
+      move: R
+      to: q_verify
+    - from: q_verify
       read: ['□']
       write: ['□']
       move: R
       to: q_accept
-  # Aceptadas (longitud >= 5): aaabbb, aaaabbbb, aaaaabbbbb
-  # Rechazadas (longitud >= 5): aaabb, aabbb, ababab
-  inputs: [aaabbb, aaaabbbb, aaaaabbbbb, aaabb, aabbb, ababab]
+
+  # Tres aceptadas y tres rechazadas; todas tienen longitud >= 5.
+  inputs: [aabbcc, aaabbbccc, aaaabbbbcccc, aabbbcc, aabbc, aabccc]

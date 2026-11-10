@@ -24,8 +24,8 @@ function tapeContent(result: SimulationResult, blank: string): string {
 describe('examples/reconocedora.yaml', () => {
   const config = load('reconocedora.yaml');
   const inputs = config.inputStrings ?? [];
-  const accepted = ['aaabbb', 'aaaabbbb', 'aaaaabbbbb'];
-  const rejected = ['aaabb', 'aabbb', 'ababab'];
+  const accepted = ['aabbcc', 'aaabbbccc', 'aaaabbbbcccc'];
+  const rejected = ['aabbbcc', 'aabbc', 'aabccc'];
 
   it('define al menos dos cadenas aceptadas y dos rechazadas, todas de longitud >= 5', () => {
     expect(inputs).toEqual([...accepted, ...rejected]);
@@ -51,10 +51,10 @@ describe('examples/alteradora.yaml', () => {
   const config = load('alteradora.yaml');
   // Arreglo de pares (y no un objeto) para conservar el orden de las cadenas.
   const expected: [input: string, output: string][] = [
-    ['10111', '11000'],
-    ['11111', '100000'],
-    ['10100', '10101'],
-    ['101011', '101100'],
+    ['10101', '1010110101'],
+    ['11010', '1101011010'],
+    ['11111', '1111111111'],
+    ['100101', '100101100101'],
   ];
   const inputs = expected.map(([input]) => input);
 

@@ -50,7 +50,7 @@ Opciones:
 Ejemplos:
   npm run dev -- examples/reconocedora.yaml
   npm run dev -- examples/alteradora.yaml --summary
-  npm run dev -- examples/reconocedora.yaml --input aaabbb --input aaabb`;
+  npm run dev -- examples/reconocedora.yaml --input aabbcc --input aabbbcc`;
 
 export interface CliArgs {
   help: boolean;

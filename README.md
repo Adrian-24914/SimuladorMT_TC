@@ -4,6 +4,10 @@ Base académica en TypeScript para desarrollar, en módulos independientes, una 
 
 > Estado: scaffold inicial. El parser, el motor, la presentación de resultados y los ejemplos aún no han sido verificados contra `Proyecto_3.pdf`. No se afirma que exista una simulación funcional.
 
+## Video de demostración
+
+[Ver explicación y demostración del simulador en YouTube](https://youtu.be/G9qysJE4Bck)
+
 ## Requisitos previos
 
 - Node.js 22 o superior.

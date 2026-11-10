@@ -43,7 +43,7 @@ src/core/    Cinta, transiciones y simulación
 src/cli/     Entrada de consola y presentación
  tests/      Pruebas separadas por módulo
 examples/    Borradores YAML de máquina reconocedora y alteradora
-.github/     CI de calidad para pull requests y ramas de trabajo
+.github/     Automatización de verificaciones de calidad
 ```
 
 ## Pruebas
@@ -57,7 +57,3 @@ Ejecuta `npm test`. Las pruebas actuales verifican que los puntos aún no implem
 - CLI: argumentos/selección de archivos, visualización paso a paso y salida final.
 - Ejemplos: confirmar formato y semántica con los requisitos exactos de `Proyecto_3.pdf`.
 - Revisar y regenerar `package-lock.json` ejecutando `npm install` al integrar dependencias.
-
-## GitHub
-
-La estructura está preparada para `main`, `feature/parser`, `feature/core` y `feature/cli`. Revisa `INSTRUCCIONES_EQUIPO.md` para el flujo de ramas y PR.

@@ -29,7 +29,7 @@ Decisiones provisionales por falta del PDF en el repositorio: Node.js 22, ESM, Y
 
 ## Cambios a contratos compartidos
 
-No modificar `shared/types.ts` unilateralmente. Proponer cambios en PR, explicar compatibilidad y actualizar pruebas/consumidores afectados. Preferir campos opcionales solo cuando exista una necesidad documentada. Cada módulo debe exportar su API pública desde su `index.ts` y evitar exponer detalles internos.
+Los cambios en `shared/types.ts` deben conservar la compatibilidad o actualizar las pruebas y consumidores afectados. Preferir campos opcionales solo cuando exista una necesidad documentada. Cada módulo debe exportar su API pública desde su `index.ts` y evitar exponer detalles internos.
 
 ## Estado actual
 
